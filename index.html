@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrcDrop - Discount Tracker</title>
+    <title>PrcDrop - Price Drop Tracker</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1d1d1f;
+            background-color: #1a1a1a;
             color: #ffffff;
             margin: 0;
             padding: 0;
@@ -22,17 +22,17 @@
             max-width: 400px;
             padding: 20px;
             box-sizing: border-box;
+            text-align: center;
         }
 
         h1 {
-            font-size: 3rem;
-            text-align: center;
+            font-size: 2.5rem;
             margin-bottom: 0.5rem;
+            font-weight: 600;
         }
 
         h2 {
-            font-size: 1.5rem;
-            text-align: center;
+            font-size: 1.125rem;
             color: #86868b;
             margin-bottom: 2rem;
             font-weight: normal;
@@ -40,14 +40,18 @@
 
         .card {
             background-color: #2c2c2e;
-            border-radius: 1rem;
-            padding: 2rem;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
         }
 
         form {
             display: flex;
             flex-direction: column;
             gap: 1rem;
+        }
+
+        .input-group {
+            text-align: left;
         }
 
         label {
@@ -60,18 +64,22 @@
         input {
             width: 100%;
             padding: 0.75rem;
-            border: 1px solid #86868b;
+            border: 1px solid #424242;
             border-radius: 0.5rem;
             background-color: #3a3a3c;
             color: #ffffff;
-            font-size: 1rem;
+            font-size: 0.875rem;
             box-sizing: border-box;
+        }
+
+        input::placeholder {
+            color: #86868b;
         }
 
         input:focus {
             outline: none;
             border-color: #0071e3;
-            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.5);
+            box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.25);
         }
 
         button {
@@ -81,14 +89,19 @@
             color: #ffffff;
             border: none;
             border-radius: 0.5rem;
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 0.875rem;
+            font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s;
         }
 
         button:hover {
             background-color: #0077ED;
+        }
+
+        button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
         }
 
         .message {
@@ -99,6 +112,7 @@
             display: flex;
             align-items: center;
             font-size: 0.875rem;
+            text-align: left;
         }
 
         .message.success {
@@ -112,40 +126,6 @@
         .message-icon {
             margin-right: 0.5rem;
         }
-
-        @media (max-width: 480px) {
-            body {
-                align-items: flex-start;
-                padding-top: 1rem;
-            }
-
-            .container {
-                padding: 10px;
-            }
-
-            h1 {
-                font-size: 2.5rem;
-                margin-top: 0;
-                margin-bottom: 0.25rem;
-            }
-
-            h2 {
-                font-size: 1.1rem;
-                margin-bottom: 1rem;
-            }
-
-            .card {
-                padding: 1.25rem;
-            }
-
-            form {
-                gap: 0.75rem;
-            }
-
-            input, button {
-                padding: 0.6rem;
-            }
-        }
     </style>
 </head>
 <body>
@@ -154,13 +134,23 @@
         <h2>Never miss a sale of the products you love.</h2>
         <div class="card">
             <form id="discountForm">
-                <div>
+                <div class="input-group">
                     <label for="url">Product URL</label>
-                    <input type="url" id="url" placeholder="https://example.com/product" required>
+                    <input 
+                        type="url" 
+                        id="url" 
+                        placeholder="https://example.com/product" 
+                        required
+                    >
                 </div>
-                <div>
+                <div class="input-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" placeholder="you@example.com" required>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        placeholder="you@example.com" 
+                        required
+                    >
                 </div>
                 <button type="submit">Track Discounts</button>
             </form>
@@ -180,31 +170,30 @@
             submitButton.disabled = true;
             submitButton.textContent = 'Submitting...';
 
-            fetch('http://my-ec2-ip-or-domain/track', {
+            fetch('https://api.prcdrop.co.za/track', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ url, email })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    messageEl.textContent = data.error;
-                    messageEl.className = 'message error';
-                } else {
-                    messageEl.textContent = data.message || 'Discount tracker set successfully!';
-                    messageEl.className = 'message success';
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
+                return response.json();
+            })
+            .then(data => {
+                messageEl.textContent = data.message || 'Tracking started successfully!';
+                messageEl.className = 'message success';
                 messageEl.style.display = 'block';
-                messageEl.innerHTML = `<span class="message-icon">${data.error ? '✖' : '✓'}</span>` + messageEl.textContent;
+                messageEl.innerHTML = '<span class="message-icon">✓</span>' + messageEl.textContent;
 
                 // Clear form fields on success
-                if (!data.error) {
-                    document.getElementById('url').value = '';
-                    document.getElementById('email').value = '';
-                }
+                document.getElementById('url').value = '';
+                document.getElementById('email').value = '';
             })
             .catch(error => {
-                messageEl.textContent = 'Failed to set tracker. Please try again.';
+                console.error('Error:', error);
+                messageEl.textContent = 'Failed to start tracking. Please try again.';
                 messageEl.className = 'message error';
                 messageEl.style.display = 'block';
                 messageEl.innerHTML = '<span class="message-icon">✖</span>' + messageEl.textContent;
